@@ -1,2 +1,7 @@
 rootProject.name = 'smx-kt'
 
+include 'smx-core'
+include 'smx-java'
+include 'smx-java-example'
+include 'smx-javascript'
+include 'smx-javascript-example'
