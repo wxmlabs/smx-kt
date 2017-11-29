@@ -1,5 +1,5 @@
-# Shadow Castle
-中国国产密码算法的纯Java实现。因为第一次开源自己的源代码，有很多需要学习。希望开源社区的各位大佬能给予帮助和支持。
+# SMx Kotlin
+中国国产密码算法的Kotlin实现。因为第一次开源自己的源代码，有很多需要学习。希望开源社区的各位大佬能给予帮助和支持。
 
 
 [SM3密码杂凑算法]: https://wenku.baidu.com/view/c3bb5425ccbff121dd36831a.html
