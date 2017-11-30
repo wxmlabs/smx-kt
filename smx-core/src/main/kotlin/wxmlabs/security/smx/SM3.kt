@@ -1,3 +1,5 @@
+@file:Suppress("LocalVariableName", "PrivatePropertyName", "FunctionName")
+
 package wxmlabs.security.smx
 
 /**
@@ -41,7 +43,7 @@ fun wordArrayOf(vararg elements: Word): WordArray {
     return wordArray
 }
 
-/** 循环左移。Ring shifts this value light by [bits]. */
+/** 循环左移。Ring shifts this value light by [bitCount]. */
 infix fun Word.rshl(bitCount: Int): Word { // ring shift left
     return this.shl(bitCount) or this.ushr(32 - bitCount)
 }
@@ -58,16 +60,16 @@ fun WordArray.toByteArray(): ByteArray {
 }
 
 typealias MessageGroup = ByteArray // 每次迭代压缩的消息分组固定为16字，合64字节，计512比特。
-fun MessageGroup.toWordArray(): WordArray {
+fun MessageGroup.fillWordArray(target: WordArray, offset: Int): Int {
     // 字节数组长度必须为4的倍，由于仅在SM3内部使用，这里不做长度校验。
-    val r = WordArray(this.size.shr(2))
-    for (i in 0.until(r.size)) {
-        r[i] = this[i.shl(2)].toInt().shl(24)
+    val fillLen = this.size.shr(2)
+    for (i in offset.until(fillLen)) {
+        target[i] = this[i.shl(2)].toInt().shl(24)
                 .or(this[i.shl(2) + 1].toInt().shl(16))
                 .or(this[i.shl(2) + 2].toInt().shl(8))
                 .or(this[i.shl(2) + 3].toInt())
     }
-    return r
+    return fillLen
 }
 
 fun Long.toWord(): Word {
@@ -107,29 +109,21 @@ class SM3 {
      *      ∨：32比特或运算
      *      ⊕：32比特异或运算
      *      ¬：32比特非运算
-     *      +：mod232算术加运算
+     *      +：mod2^32算术加运算
      *      ≪k：循环左移k比特运算
      *      ←：左向赋值运算符
      */
     /**
-     * 单位：Word(32bit)
-     */
-    private val RESULT_LEN = 8 // ABCDEFGH寄存器容量。8字，合32字节，计256比特
-    /**
      * 单位：Byte
      */
     private val MSG_GROUP_LEN = 64 // B(i)消息分组容量。16字，合64字节，计512比特
-    /**
-     * 单位：bit
-     */
-    val DIGEST_LENGTH = 256
 
     /**-
      *  4. 常数与函数
      *  4.1 初始值
      *  IV ＝ 7380166f 4914b2b9 172442d7 da8a0600 a96f30bc 163138aa e38dee4d b0fb0e4e
      */
-    val IV: WordArray = wordArrayOf(0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600.toWord(), 0xa96f30bc.toWord(), 0x163138aa, 0xe38dee4d.toWord(), 0xb0fb0e4e.toWord())
+    private val IV: WordArray = wordArrayOf(0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600.toWord(), 0xa96f30bc.toWord(), 0x163138aa, 0xe38dee4d.toWord(), 0xb0fb0e4e.toWord())
 
     /**-
      *  4.2 常量
@@ -137,13 +131,10 @@ class SM3 {
      *  Tj ＝｛
      *        7a879d8a 16 ≤ j ≤ 63
      */
-    val T: (Int) -> Word = { j ->
-        if (j in 0..15) {
-            0x79cc4519
-        } else if (j in 16..63) {
-            0x7a879d8a
-        }
-        throw IllegalArgumentException("j must in 0..63")
+    private fun T(j: Int) = when (j) {
+        in 0..15 -> 0x79cc4519
+        in 16..63 -> 0x7a879d8a
+        else -> throw IllegalArgumentException("j must in 0..63")
     }
 
     /**-
@@ -156,25 +147,23 @@ class SM3 {
      *  GGj(X,Y,Z) = {
      *                (X ∧ Y) ∨ (¬X ∧ Z)               16 ≤ j ≤ 63
      */
-    fun FF(X: Word, Y: Word, Z: Word): Any {
-        return { j: Int ->
-            if (j in 0..15) {
-                X xor Y xor Z
-            } else if (j in 16..63) {
-                (X and Y) or (X and Z) or (Y and Z)
+    private fun FF(j: Int): (X: Word, Y: Word, Z: Word) -> Word {
+        return { X, Y, Z ->
+            when (j) {
+                in 0..15 -> X xor Y xor Z
+                in 16..63 -> (X and Y) or (X and Z) or (Y and Z)
+                else -> throw IllegalArgumentException("j must in 0..63")
             }
-            throw IllegalArgumentException("j must in 0..63")
         }
     }
 
-    fun GG(X: Word, Y: Word, Z: Word): Any {
-        return { j: Int ->
-            if (j in 0..15) {
-                X xor Y xor Z
-            } else if (j in 16..63) {
-                (X and Y) or (X.inv() and Z)
+    private fun GG(j: Int): (X: Word, Y: Word, Z: Word) -> Word {
+        return { X, Y, Z ->
+            when (j) {
+                in 0..15 -> X xor Y xor Z
+                in 16..63 -> (X and Y) or (X.inv() and Z)
+                else -> throw IllegalArgumentException("j must in 0..63")
             }
-            throw IllegalArgumentException("j must in 0..63")
         }
     }
 
@@ -184,13 +173,9 @@ class SM3 {
      *  P1(X) = X ⊕ (X ≪ 15) ⊕ (X ≪ 23)
      *  式中X为字。
      */
-    fun P0(X: Word): Word {
-        return X xor (X rshl 9) xor (X rshl 17)
-    }
+    private fun P0(X: Word) = X xor (X rshl 9) xor (X rshl 17)
 
-    fun P1(X: Word): Word {
-        return X xor (X rshl 15) xor (X rshl 23)
-    }
+    private fun P1(X: Word) = X xor (X rshl 15) xor (X rshl 23)
 
     /**-
      * 5. 算法描述
@@ -249,15 +234,22 @@ class SM3 {
      * 将消息分组B(i)按以下方法扩展生成132个字W0,W1,···,W67,W′0,W′1,···,W′63,用于压缩函数CF:
      *   a)将消息分组B(i)划分为16个字W0,W1,···,W15。
      *   b)FOR j=16 TO 67
-     *        Wj ← P1(Wj−16 ⊕Wj−9 ⊕(Wj−3 ≪ 15))⊕(Wj−13 ≪ 7)⊕Wj−6
+     *        Wj←P1(Wj−16⊕Wj−9⊕(Wj−3≪15))⊕(Wj−13≪7)⊕Wj−6
      *     ENDFOR
      *   c)FOR j=0 TO 63
-     *        W′j =Wj ⊕Wj+4
+     *        W′j=Wj⊕Wj+4
      *     ENDFOR
      */
-    fun processing(msgGroup: MessageGroup): WordArray {
-        val wordArray = WordArray(132)
-        return wordArray
+    private val W = WordArray(68)
+    private val W_ = WordArray(64)
+    private fun processing(msgGroup: MessageGroup) {
+        if (msgGroup.fillWordArray(W, 0) != 16) throw IllegalStateException("MessageGroup size error! MessageGroup must be 64 bytes.")
+        for (j in 16..67) {
+            W[j] = P1(W[j - 16] xor W[j - 9] xor W[j - 3].rshl(15)) xor W[j - 13].rshl(7) xor W[j - 6]
+        }
+        for (j in 0..63) {
+            W_[j] = W[j] xor W[j + 4]
+        }
     }
 
     /**-
@@ -281,10 +273,27 @@ class SM3 {
      *   ENDFOR
      *   V(i+1)←ABCDEFGH⊕V(i)其中,字的存储为大端(big-endian)格式。
      */
-    fun digestMessage(msgGroup: MessageGroup) {
-        val Bi = processing(msgGroup)
+    /* A:W[0],B:W[1],C:W[2],D:W[3],E:W[4],F:W[5],G:W[6],H:W[7] */
+    private fun digestMessage(msgGroup: MessageGroup) {
+        processing(msgGroup)
         // Begin CF, 运算结果符合公式 result = CF(result, Bi)
-
+        for (j in 0..63) {
+            val SS1 = ((W[0] rshl 12) + W[4] + (T(j) rshl j)) rshl 7
+            val SS2 = SS1 xor (W[0] rshl 12)
+            val TT1 = FF(j)(W[0], W[1], W[2]) + W[3] + SS2 + W_[j]
+            val TT2 = GG(j)(W[4], W[5], W[6]) + W[7] + SS1 + W[j]
+            W[3] = W[2]
+            W[2] = W[1] rshl 9
+            W[1] = W[0]
+            W[0] = TT1
+            W[7] = W[6]
+            W[6] = W[5] rshl 19
+            W[5] = W[4]
+            W[4] = P0(TT2)
+        }
+        for (i in 0..7) {
+            result[i] = W[i] xor result[i]
+        }
         // End CF
     }
 
@@ -366,11 +375,29 @@ class SM3 {
     /**
      * 计算消息摘要（全量方式）
      * 例：
-     *    val sm3MessageDigest = SM3.digest(msg)
+     *    val sm3 = SM3()
+     *    val sm3MessageDigest = sm3.digest(msg)
      *
      * @param message 消息
      */
     fun digest(message: ByteArray): ByteArray {
         return update(message).digest()
     }
+
+    companion object {
+        /**
+         * 一次性计算，不推荐。
+         * 例：
+         *    val sm3MessageDigest = SM3.digest(msg)
+         *
+         * @param message 消息
+         */
+        fun digest(message: ByteArray): ByteArray {
+            return SM3().digest(message)
+        }
+    }
+}
+
+fun main(args: Array<String>) {
+
 }
