@@ -1,16 +1,5 @@
 package wxmlabs.security.smx
-
-
-val dict = "0123456789abcdef"
-
-fun ByteArray.toHexString(): String {
-    var s = ""
-    this.forEach { byte: Byte ->
-        s += byte.toInt() shr 4 and 0x0f
-        s += byte.toInt() and 0x0f
-    }
-    return s
-}
+import wxmlabs.kotlin.toHexString
 
 fun testDigest() {
     val sm3Digest = SM3.digest(byteArrayOf(0x61, 0x62, 0x63))

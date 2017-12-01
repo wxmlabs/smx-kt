@@ -2,6 +2,8 @@
 
 package wxmlabs.security.smx
 
+import wxmlabs.kotlin.toByteArray
+
 /**
  *  SM3密码杂凑算法
  *  （PS：杂凑算法又称为“消息摘要（Message Digest）算法”）
@@ -74,19 +76,6 @@ fun MessageGroup.fillWordArray(target: WordArray, offset: Int): Int {
 
 fun Long.toWord(): Word {
     return this.toInt()
-}
-
-fun Long.toByteArray(): ByteArray { // 8Bytes
-    return byteArrayOf(
-            this.ushr(56).toByte()
-            , this.ushr(48).toByte()
-            , this.ushr(40).toByte()
-            , this.ushr(32).toByte()
-            , this.ushr(24).toByte()
-            , this.ushr(16).toByte()
-            , this.ushr(8).toByte()
-            , this.toByte()
-    )
 }
 
 class SM3 {
@@ -345,6 +334,7 @@ class SM3 {
                 digestMessage(buffer)
                 resetBuffer()
             }
+            traceMessage(message[i])
         }
         msgLen += length
         return this
@@ -396,8 +386,26 @@ class SM3 {
             return SM3().digest(message)
         }
     }
-}
 
-fun main(args: Array<String>) {
+    /**
+     * 用于调试的代码。在找到其他更好的方法代替前，暂时保留。
+     */
+    /*  BEGIN DEBUG CODE  */
+    private var msg: MutableList<Byte>? = null
 
+    private fun traceMessage(message: Byte) {
+        if (SMxProperties.debug) {
+            if (msg == null) {
+                msg = ArrayList<Byte>()
+            }
+            msg?.add(message)
+        }
+    }
+
+    private fun traceMessage() {
+        if (SMxProperties.debug) {
+            msg?.toByteArray()
+        }
+    }
+    /*  END DEBUG CODE  */
 }
