@@ -2,7 +2,7 @@
 
 package wxmlabs.security.smx
 
-import wxmlabs.kotlin.toByteArray
+import wxmlabs.kotlin.*
 
 /**
  *  SM3密码杂凑算法
@@ -61,17 +61,20 @@ fun WordArray.toByteArray(): ByteArray {
     return r
 }
 
+fun wordFromBytes(b0: Byte, b1: Byte, b2: Byte, b3: Byte): Word {
+    return intFromBytes(b0, b1, b2, b3)
+}
+
 typealias MessageGroup = ByteArray // 每次迭代压缩的消息分组固定为16字，合64字节，计512比特。
-fun MessageGroup.fillWordArray(target: WordArray, offset: Int): Int {
+fun WordArray.fill(messageGroup: MessageGroup) {
     // 字节数组长度必须为4的倍，由于仅在SM3内部使用，这里不做长度校验。
-    val fillLen = this.size.shr(2)
-    for (i in offset.until(fillLen)) {
-        target[i] = this[i.shl(2)].toInt().shl(24)
-                .or(this[i.shl(2) + 1].toInt().shl(16))
-                .or(this[i.shl(2) + 2].toInt().shl(8))
-                .or(this[i.shl(2) + 3].toInt())
+    for (i in 0 until 16) {
+        this[i] = wordFromBytes(
+                messageGroup[i.shl(2)],
+                messageGroup[i.shl(2) + 1],
+                messageGroup[i.shl(2) + 2],
+                messageGroup[i.shl(2) + 3])
     }
-    return fillLen
 }
 
 fun Long.toWord(): Word {
@@ -193,7 +196,7 @@ class SM3 {
         if (paddingLen < 8) paddingLen = MSG_GROUP_LEN shl 1 - bufferOffset
         val padding = ByteArray(paddingLen)
         padding[0] = 0x80.toByte()
-        msgLen.toByteArray().forEachIndexed { i, byte ->
+        msgLen.shl(3).toByteArray().forEachIndexed { i, byte ->
             padding[paddingLen - 8 + i] = byte
         }
         update(padding)
@@ -232,7 +235,7 @@ class SM3 {
     private val W = WordArray(68)
     private val W_ = WordArray(64)
     private fun processing(msgGroup: MessageGroup) {
-        if (msgGroup.fillWordArray(W, 0) != 16) throw IllegalStateException("MessageGroup size error! MessageGroup must be 64 bytes.")
+        W.fill(msgGroup)
         for (j in 16..67) {
             W[j] = P1(W[j - 16] xor W[j - 9] xor W[j - 3].rshl(15)) xor W[j - 13].rshl(7) xor W[j - 6]
         }
@@ -265,6 +268,7 @@ class SM3 {
     /* A:W[0],B:W[1],C:W[2],D:W[3],E:W[4],F:W[5],G:W[6],H:W[7] */
     private fun digestMessage(msgGroup: MessageGroup) {
         processing(msgGroup)
+        showExtensionBi()
         // Begin CF, 运算结果符合公式 result = CF(result, Bi)
         for (j in 0..63) {
             val SS1 = ((W[0] rshl 12) + W[4] + (T(j) rshl j)) rshl 7
@@ -279,6 +283,7 @@ class SM3 {
             W[6] = W[5] rshl 19
             W[5] = W[4]
             W[4] = P0(TT2)
+            traceCF(j)
         }
         for (i in 0..7) {
             result[i] = W[i] xor result[i]
@@ -357,7 +362,9 @@ class SM3 {
      *    val sm3MessageDigest = sm3.digest()
      */
     fun digest(): ByteArray {
+        showMessage("origin")
         updatePadding()
+        showMessage("padded")
         finish = true
         return getMessageDigest()
     }
@@ -385,6 +392,9 @@ class SM3 {
         fun digest(message: ByteArray): ByteArray {
             return SM3().digest(message)
         }
+
+        // for debug
+        val wordHexStyle = WordHexStyle()
     }
 
     /**
@@ -402,9 +412,51 @@ class SM3 {
         }
     }
 
-    private fun traceMessage() {
+    private fun showMessage(prefix: String) {
         if (SMxProperties.debug) {
-            msg?.toByteArray()
+            debug("$prefix message:\r\n${msg?.toByteArray()?.toHexString(wordHexStyle)}")
+        }
+    }
+
+    private fun showExtensionBi() {
+        if (SMxProperties.debug) {
+            debug("W0,W1,···,W67\r\n${W.toByteArray().toHexString(wordHexStyle)}")
+            debug("W′0,W′1,···,W′63\r\n${W_.toByteArray().toHexString(wordHexStyle)}")
+        }
+    }
+
+    private fun traceCF(i: Int) {
+        if (SMxProperties.debug) {
+            if (i == 0) debug(message = "   A        B        C        D        E        F        G        H    ")
+            debug("$i\r\n${W.copyOfRange(0, 7).toByteArray().toHexString(wordHexStyle)}")
+        }
+    }
+
+    private fun debug(message: String) {
+        if (SMxProperties.debug) {
+            println(message)
+        }
+    }
+
+
+    class WordHexStyle : HexStringStyle {
+        private var wc = 0 // 组计数器
+        private var lc = 0 // 行计数器
+        override fun appendTo(builder: StringBuilder, byteHexString: String, byteIndex: Int) {
+            builder.append(byteHexString)
+            if (wc++ == 3) { // 4bytes一组
+                builder.append(' ')
+                if (lc++ == 7) { // 8words一行
+                    builder.append("\r\n")
+                    lc = 0
+                }
+                wc = 0
+            }
+        }
+
+        override fun reset() {
+            wc = 0
+            lc = 0
         }
     }
     /*  END DEBUG CODE  */
