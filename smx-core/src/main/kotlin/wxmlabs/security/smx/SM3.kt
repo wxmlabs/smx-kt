@@ -212,9 +212,8 @@ class SM3 {
      * ENDFOR
      * 其中CF是压缩函数,V(0)为256比特初始值IV,B(i)为填充后的消息分组,迭代压缩的结果为V(n)。
      */
-    /* 使用result寄存器保存运算结果V(i＋1)；同时它也是上次运算的结果（或初始向量IV），即V(i) */
-    /* ABCDEFGH寄存器。8字，合32字节，计256比特 */
-    private val result = IV.copyOf()
+    /* 使用V寄存器保存运算结果V(i＋1)；同时它也是上次运算的结果（或初始向量IV），即V(i) */
+    private val V = IV.copyOf()
     /* 使用buffer缓存传入的message。直到满足分组条件，即缓冲区填满。进行一次迭代压缩运算。*/
     /* 分组消息数据缓冲区。缓冲区一旦填满即进行迭代压缩运算，直至调用digest函数结束运算并获取结果。 */
     private val buffer = MessageGroup(MSG_GROUP_LEN)
@@ -265,29 +264,43 @@ class SM3 {
      *   ENDFOR
      *   V(i+1)←ABCDEFGH⊕V(i)其中,字的存储为大端(big-endian)格式。
      */
-    /* A:W[0],B:W[1],C:W[2],D:W[3],E:W[4],F:W[5],G:W[6],H:W[7] */
     private fun digestMessage(msgGroup: MessageGroup) {
         processing(msgGroup)
         showExtensionBi()
+        /* ABCDEFGH寄存器。8字，合32字节，计256比特 */
+        var A = V[0]
+        var B = V[1]
+        var C = V[2]
+        var D = V[3]
+        var E = V[4]
+        var F = V[5]
+        var G = V[6]
+        var H = V[7]
         // Begin CF, 运算结果符合公式 result = CF(result, Bi)
         for (j in 0..63) {
-            val SS1 = ((W[0] rshl 12) + W[4] + (T(j) rshl j)) rshl 7
-            val SS2 = SS1 xor (W[0] rshl 12)
-            val TT1 = FF(j)(W[0], W[1], W[2]) + W[3] + SS2 + W_[j]
-            val TT2 = GG(j)(W[4], W[5], W[6]) + W[7] + SS1 + W[j]
-            W[3] = W[2]
-            W[2] = W[1] rshl 9
-            W[1] = W[0]
-            W[0] = TT1
-            W[7] = W[6]
-            W[6] = W[5] rshl 19
-            W[5] = W[4]
-            W[4] = P0(TT2)
-            traceCF(j)
+            val SS1 = ((A rshl 12) + E + (T(j) rshl j)) rshl 7
+            val SS2 = SS1 xor (A rshl 12)
+            val TT1 = FF(j)(A, B, C) + D + SS2 + W_[j]
+            val TT2 = GG(j)(E, F, G) + H + SS1 + W[j]
+            D = C
+            C = B rshl 9
+            B = A
+            A = TT1
+            H = G
+            G = F rshl 19
+            F = E
+            E = P0(TT2)
+            traceCF(j, A, B, C, D, E, F, G, H)
         }
-        for (i in 0..7) {
-            result[i] = W[i] xor result[i]
-        }
+        // V(i+1) = ABCDEFG ⊕ V(i)
+        V[0] = A xor V[0]
+        V[1] = B xor V[1]
+        V[2] = C xor V[2]
+        V[3] = D xor V[3]
+        V[4] = E xor V[4]
+        V[5] = F xor V[5]
+        V[6] = G xor V[6]
+        V[7] = H xor V[7]
         // End CF
     }
 
@@ -298,7 +311,7 @@ class SM3 {
      */
     private fun getMessageDigest(): ByteArray {
         if (!finish) throw IllegalStateException("Use digest(...) to get message digest.")
-        val messageDigest = result.toByteArray()
+        val messageDigest = V.toByteArray()
         reset()
         return messageDigest
     }
@@ -321,7 +334,7 @@ class SM3 {
 
     private fun resetResult() {
         IV.forEachIndexed { i, w ->
-            result[i] = w
+            V[i] = w
         }
     }
 
@@ -425,10 +438,19 @@ class SM3 {
         }
     }
 
-    private fun traceCF(i: Int) {
+    private fun traceCF(i: Int, A: Int, B: Int, C: Int, D: Int, E: Int, F: Int, G: Int, H: Int) {
         if (SMxProperties.debug) {
             if (i == 0) debug(message = "   A        B        C        D        E        F        G        H    ")
-            debug("$i\r\n${W.copyOfRange(0, 7).toByteArray().toHexString(wordHexStyle)}")
+            debug("$i\r\n"
+                    + A.toByteArray().toHexString() + ' '
+                    + B.toByteArray().toHexString() + ' '
+                    + C.toByteArray().toHexString() + ' '
+                    + D.toByteArray().toHexString() + ' '
+                    + E.toByteArray().toHexString() + ' '
+                    + F.toByteArray().toHexString() + ' '
+                    + G.toByteArray().toHexString() + ' '
+                    + H.toByteArray().toHexString()
+            )
         }
     }
 
