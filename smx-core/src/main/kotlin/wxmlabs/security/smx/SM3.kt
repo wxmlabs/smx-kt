@@ -233,7 +233,7 @@ class SM3 {
      */
     private val W = WordArray(68)
     private val W_ = WordArray(64)
-    private fun processing(msgGroup: MessageGroup) {
+    private fun processMessageGroup(msgGroup: MessageGroup) {
         W.fill(msgGroup)
         for (j in 16..67) {
             W[j] = P1(W[j - 16] xor W[j - 9] xor W[j - 3].rshl(15)) xor W[j - 13].rshl(7) xor W[j - 6]
@@ -265,7 +265,7 @@ class SM3 {
      *   V(i+1)←ABCDEFGH⊕V(i)其中,字的存储为大端(big-endian)格式。
      */
     private fun digestMessage(msgGroup: MessageGroup) {
-        processing(msgGroup)
+        processMessageGroup(msgGroup)
         showExtensionBi()
         /* ABCDEFGH寄存器。8字，合32字节，计256比特 */
         var A = V[0]
@@ -321,7 +321,7 @@ class SM3 {
     /* 结束运算标记，用于判断是否可以调用getMessageDigest函数 */
     private var finish = false
 
-    private fun reset() {
+    fun reset() {
         resetBuffer()
         resetResult()
         resetMessageCounter()
@@ -347,12 +347,7 @@ class SM3 {
      */
     fun update(message: ByteArray, offset: Int, length: Int): SM3 {
         for (i in offset.until(length)) {
-            buffer[bufferOffset++] = message[i]
-            if (bufferOffset == MSG_GROUP_LEN) {
-                digestMessage(buffer)
-                resetBuffer()
-            }
-            traceMessage(message[i])
+            processBuffer(message[i])
         }
         msgLen += length
         return this
@@ -363,6 +358,24 @@ class SM3 {
      */
     fun update(message: ByteArray): SM3 {
         return update(message, 0, message.size)
+    }
+
+    /**
+     * @param message 消息
+     */
+    fun update(message: Byte): SM3 {
+        processBuffer(message)
+        msgLen++
+        return this
+    }
+
+    private fun processBuffer(message: Byte) {
+        buffer[bufferOffset++] = message
+        if (bufferOffset == MSG_GROUP_LEN) {
+            digestMessage(buffer)
+            resetBuffer()
+        }
+        traceMessage(message)
     }
 
     /**
@@ -462,23 +475,25 @@ class SM3 {
 
 
     class WordHexStyle : HexStringStyle {
-        private var wc = 0 // 组计数器
-        private var lc = 0 // 行计数器
+        private var bc = 0 // byte counter
+        private var wc = 0 // word counter
         override fun appendTo(builder: StringBuilder, byteHexString: String, byteIndex: Int) {
-            builder.append(byteHexString)
-            if (wc++ == 3) { // 4bytes一组
-                builder.append(' ')
-                if (lc++ == 7) { // 8words一行
-                    builder.append("\r\n")
-                    lc = 0
-                }
+            if (wc > 7) { // 8words pre line
+                builder.append("\r\n")
                 wc = 0
+            }
+            builder.append(byteHexString)
+            bc++
+            if (bc > 3) { // 4bytes pre word
+                wc++
+                builder.append(' ')
+                bc = 0
             }
         }
 
         override fun reset() {
+            bc = 0
             wc = 0
-            lc = 0
         }
     }
     /*  END DEBUG CODE  */
