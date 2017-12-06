@@ -2,7 +2,10 @@
 
 package wxmlabs.security.smx
 
-import wxmlabs.kotlin.*
+import wxmlabs.kotlin.HexStringStyle
+import wxmlabs.kotlin.intFromBytes
+import wxmlabs.kotlin.toByteArray
+import wxmlabs.kotlin.toHexString
 
 /**
  *  SM3密码杂凑算法
@@ -70,10 +73,10 @@ fun WordArray.fill(messageGroup: MessageGroup) {
     // 字节数组长度必须为4的倍，由于仅在SM3内部使用，这里不做长度校验。
     for (i in 0 until 16) {
         this[i] = wordFromBytes(
-                messageGroup[i.shl(2)],
-                messageGroup[i.shl(2) + 1],
-                messageGroup[i.shl(2) + 2],
-                messageGroup[i.shl(2) + 3])
+            messageGroup[i.shl(2)],
+            messageGroup[i.shl(2) + 1],
+            messageGroup[i.shl(2) + 2],
+            messageGroup[i.shl(2) + 3])
     }
 }
 
@@ -430,7 +433,7 @@ class SM3 {
     private var msg: MutableList<Byte>? = null
 
     private fun traceMessage(message: Byte) {
-        if (SMxProperties.debug) {
+        if (debug) {
             if (msg == null) {
                 msg = ArrayList<Byte>()
             }
@@ -439,40 +442,33 @@ class SM3 {
     }
 
     private fun showMessage(prefix: String) {
-        if (SMxProperties.debug) {
+        if (debug) {
             debug("$prefix message:\r\n${msg?.toByteArray()?.toHexString(wordHexStyle)}")
         }
     }
 
     private fun showExtensionBi() {
-        if (SMxProperties.debug) {
+        if (debug) {
             debug("W0,W1,···,W67\r\n${W.toByteArray().toHexString(wordHexStyle)}")
             debug("W′0,W′1,···,W′63\r\n${W_.toByteArray().toHexString(wordHexStyle)}")
         }
     }
 
     private fun traceCF(i: Int, A: Int, B: Int, C: Int, D: Int, E: Int, F: Int, G: Int, H: Int) {
-        if (SMxProperties.debug) {
+        if (debug) {
             if (i == 0) debug(message = "   A        B        C        D        E        F        G        H    ")
             debug("$i\r\n"
-                    + A.toByteArray().toHexString() + ' '
-                    + B.toByteArray().toHexString() + ' '
-                    + C.toByteArray().toHexString() + ' '
-                    + D.toByteArray().toHexString() + ' '
-                    + E.toByteArray().toHexString() + ' '
-                    + F.toByteArray().toHexString() + ' '
-                    + G.toByteArray().toHexString() + ' '
-                    + H.toByteArray().toHexString()
+                + A.toByteArray().toHexString() + ' '
+                + B.toByteArray().toHexString() + ' '
+                + C.toByteArray().toHexString() + ' '
+                + D.toByteArray().toHexString() + ' '
+                + E.toByteArray().toHexString() + ' '
+                + F.toByteArray().toHexString() + ' '
+                + G.toByteArray().toHexString() + ' '
+                + H.toByteArray().toHexString()
             )
         }
     }
-
-    private fun debug(message: String) {
-        if (SMxProperties.debug) {
-            println(message)
-        }
-    }
-
 
     class WordHexStyle : HexStringStyle {
         private var bc = 0 // byte counter

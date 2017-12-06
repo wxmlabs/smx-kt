@@ -47,5 +47,12 @@ class SMxProvider : Provider(NAME, version, info) {
                 Security.addProvider(INSTANCE)
             }
         }
+
+        @JvmStatic
+        fun unregister() {
+            if (Security.getProvider(NAME) != null) {
+                Security.removeProvider(NAME)
+            }
+        }
     }
 }
