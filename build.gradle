@@ -1,20 +1,14 @@
 group 'springca'
 version '1.0-SNAPSHOT'
 
-allprojects{
+allprojects {
     buildscript {
         repositories {
-            maven{
-                name 'central mirror'
-                url centralMirror
-            }
+            maven { url centralMirror }
         }
     }
     repositories {
-        maven{
-            name 'central mirror'
-            url centralMirror
-        }
+        maven { url centralMirror }
     }
 }
 

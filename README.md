@@ -1,5 +1,22 @@
 # SMx Kotlin
-中国国产密码算法的Kotlin实现。因为第一次开源自己的源代码，有很多需要学习。希望开源社区的各位大佬能给予帮助和支持。
+
+[![Build Status](https://travis-ci.org/springca/smx-kt.svg?branch=master)](https://travis-ci.org/springca/smx-kt)
+
+中国国产密码算法的Kotlin实现。因为第一次做开源，有很多需要学习。希望开源社区的各位大佬能给予帮助和支持。
+
+联系方式: shiningwang@vshining.com
+
+## 参考文献：
+
+- 《[SM3密码杂凑算法]》
+
+
+## 目前已实现功能
+
+- 实现SM3核心算法
+- 实现名为SMx的java.security.Provider
+- 实现SM3算法的MessageDigest
+
 
 [标准规范]: http://www.oscca.gov.cn/sca/xxgk/bzgf.shtml
 [SM3密码杂凑算法]: http://www.sca.gov.cn/sca/xwdt/2010-12/17/1002389/files/302a3ada057c4a73830536d03e683110.pdf

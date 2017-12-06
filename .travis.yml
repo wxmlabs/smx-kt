@@ -1,0 +1,10 @@
+language: java
+jdk:
+  - oraclejdk8
+  - oraclejdk9
+  - openjdk8
+os:
+  - linux
+before_install:
+  - sed -i 's/gitee.com\/wxmlabs\/gradle-wrapper\/raw/services.gradle.org/' ./gradle/wrapper/gradle-wrapper.properties
+  - sed -i 's/maven { url centralMirror }/mavenCentral()/g' build.gradle
