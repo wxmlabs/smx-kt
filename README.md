@@ -2,7 +2,11 @@
 
 [![Build Status](https://travis-ci.org/springca/smx-kt.svg?branch=master)](https://travis-ci.org/springca/smx-kt)
 
-中国国产密码算法的Kotlin实现。因为第一次做开源，有很多需要学习。希望开源社区的各位大佬能给予帮助和支持。
+中国国产密码算法的Kotlin实现。
+
+> [BouncyCastle] v1.58 已实现了国产算法。示例代码参见[smx-example-java](/smx-example-java/)。
+
+因为第一次做开源，有很多需要学习。希望开源社区的各位大佬能给予帮助和支持。
 
 联系方式: shiningwang@vshining.com
 
@@ -24,6 +28,7 @@
 [SM2椭圆曲线公钥密码算法推荐曲线参数]: http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b965ce832cc34bc191cb1cde446b860d.pdf
 
 [GmSSL]: https://github.com/guanzhi/GmSSL
+[BouncyCastle]: https://github.com/bcgit/bc-java
 
 [《证书认证系统密码及其相关安全技术规范》公告]: http://www.sca.gov.cn/sca/xwdt/2005-06/23/content_bac5968bcbd04d88a2682f8f1e44b5d5.shtml
 [证书认证系统密码及其相关安全技术规范]: http://www.sca.gov.cn/sca/xwdt/2005-06/23/bac5968bcbd04d88a2682f8f1e44b5d5/files/bd34a890bdeb4c049ee74a3cfa7d9541.pdf
