@@ -26,6 +26,8 @@
 [SM3密码杂凑算法]: http://www.sca.gov.cn/sca/xwdt/2010-12/17/1002389/files/302a3ada057c4a73830536d03e683110.pdf
 [SM2椭圆曲线公钥密码算法]: http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b791a9f908bb4803875ab6aeeb7b4e03.pdf
 [SM2椭圆曲线公钥密码算法推荐曲线参数]: http://www.oscca.gov.cn/sca/xxgk/2010-12/17/1002386/files/b965ce832cc34bc191cb1cde446b860d.pdf
+[The SM3 Cryptographic Hash Function]: https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02
+[SM2 Digital Signature Algorithm]: https://tools.ietf.org/html/draft-shen-sm2-ecdsa-02
 
 [GmSSL]: https://github.com/guanzhi/GmSSL
 [BouncyCastle]: https://github.com/bcgit/bc-java
