@@ -23,7 +23,7 @@ import static springca.smx.example.bcprov.III_SM2KeyPairGenerator.generateKeyPai
 import static springca.smx.example.bcprov.I_RegisterProvider.registerProvider;
 
 @SuppressWarnings("WeakerAccess")
-public class VII_SM2X509V3Certificate {
+public class VII_SMxCertificate {
     public static void main(String[] args) {
         registerProvider();
 
