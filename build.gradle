@@ -1,4 +1,4 @@
-group 'springca'
+group 'com.wxmlabs'
 version '1.0-SNAPSHOT'
 
 allprojects {

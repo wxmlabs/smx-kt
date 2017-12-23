@@ -1,6 +1,6 @@
-group 'wxmlabs'
+group 'com.wxmlabs'
 version '1.0-SNAPSHOT'
-
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
 buildscript {
     ext.kotlin_version = '1.2.10'
@@ -67,6 +67,7 @@ artifacts {
 }
 
 signing {
+    required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
     sign configurations.archives
 }
 

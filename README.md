@@ -1,6 +1,6 @@
 # SMx Kotlin
-[![Build Status](https://travis-ci.org/springca/smx-kt.svg?branch=master)](https://travis-ci.org/springca/smx-kt)
-[![codecov](https://codecov.io/gh/springca/smx-kt/branch/master/graph/badge.svg)](https://codecov.io/gh/springca/smx-kt)
+[![Build Status](https://travis-ci.org/wxmlabs/smx-kt.svg?branch=master)](https://travis-ci.org/wxmlabs/smx-kt)
+[![codecov](https://codecov.io/gh/wxmlabs/smx-kt/branch/master/graph/badge.svg)](https://codecov.io/gh/wxmlabs/smx-kt)
 
 中国国产密码算法的Kotlin实现。
 
