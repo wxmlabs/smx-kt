@@ -1,8 +1,9 @@
 group 'wxmlabs'
 version '1.0-SNAPSHOT'
 
+
 buildscript {
-    ext.kotlin_version = '1.2.0'
+    ext.kotlin_version = '1.2.10'
 
     repositories {
         mavenCentral()
@@ -14,9 +15,12 @@ buildscript {
 
 apply plugin: 'kotlin-platform-jvm'
 apply plugin: 'jacoco'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
+archivesBaseName = 'smx'
 
 repositories {
     mavenCentral()
@@ -47,3 +51,65 @@ jacocoTestReport {
 }
 
 check.dependsOn jacocoTestReport
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
+                authentication(userName: ossrhUserName, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                authentication(userName: ossrhUserName, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'SMx Algorithms'
+                packaging 'jar'
+                description 'SM2/SM3/SM4 Algorithms'
+                url 'https://github.com/wxmlabs/smx-kt'
+
+                scm {
+                    connection 'scm:git:git://github.com/wxmlabs/smx-kt.git'
+                    developerConnection 'scm:git:ssh://github.com:wxmlabs/smx-kt.git'
+                    url 'https://github.com/wxmlabs/smx-kt/tree/master'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'shiningwang'
+                        name 'Wang Xuanmin'
+                        email 'shiningwang@vshining.com'
+                    }
+                }
+            }
+        }
+    }
+}
