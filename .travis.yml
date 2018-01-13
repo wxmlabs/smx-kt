@@ -7,5 +7,6 @@ sudo: false
 before_install:
   - sed -i 's/gitee.com\/wxmlabs\/gradle-wrapper\/raw/services.gradle.org/' ./gradle/wrapper/gradle-wrapper.properties
   - sed -i 's/maven { url centralMirror }/mavenCentral()/g' build.gradle
+  - sed -i 's/maven { url jcenterMirror }/jcenter()/g' build.gradle
 after_success:
   - bash <(curl -s https://codecov.io/bash)

@@ -2,7 +2,7 @@ package wxmlabs.security.smx
 
 import java.security.MessageDigestSpi
 
-class SM3MessageDigest : MessageDigestSpi() {
+internal class SM3MessageDigest : MessageDigestSpi() {
     private val sm3 = SM3()
     override fun engineReset() {
         sm3.reset()

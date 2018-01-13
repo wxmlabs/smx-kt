@@ -5,10 +5,12 @@ allprojects {
     buildscript {
         repositories {
             maven { url centralMirror }
+            maven { url jcenterMirror }
         }
     }
     repositories {
         maven { url centralMirror }
+        maven { url jcenterMirror }
     }
 }
 

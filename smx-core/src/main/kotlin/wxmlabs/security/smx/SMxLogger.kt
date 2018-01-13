@@ -1,8 +1,8 @@
 package wxmlabs.security.smx
 
-var debug = false
+internal var debug = false
 
-fun debug(message: String) {
+internal fun debug(message: String) {
     if (debug) {
         println(message)
     }

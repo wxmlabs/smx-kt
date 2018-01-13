@@ -40,7 +40,7 @@ import wxmlabs.kotlin.toHexString
 
 typealias Word = Int
 typealias WordArray = IntArray
-fun wordArrayOf(vararg elements: Word): WordArray {
+internal fun wordArrayOf(vararg elements: Word): WordArray {
     val wordArray = WordArray(elements.size)
     elements.forEachIndexed { idx, word ->
         wordArray[idx] = word
@@ -49,11 +49,11 @@ fun wordArrayOf(vararg elements: Word): WordArray {
 }
 
 /** 循环左移。Ring shifts this value light by [bitCount]. */
-infix fun Word.rshl(bitCount: Int): Word { // ring shift left
+internal infix fun Word.rshl(bitCount: Int): Word { // ring shift left
     return this.shl(bitCount) or this.ushr(32 - bitCount)
 }
 
-fun WordArray.toByteArray(): ByteArray {
+internal fun WordArray.toByteArray(): ByteArray {
     val r = ByteArray(this.size shl 2)
     this.forEachIndexed { i, w ->
         r[i.shl(2)] = w.ushr(24).toByte()
@@ -64,12 +64,12 @@ fun WordArray.toByteArray(): ByteArray {
     return r
 }
 
-fun wordFromBytes(b0: Byte, b1: Byte, b2: Byte, b3: Byte): Word {
+internal fun wordFromBytes(b0: Byte, b1: Byte, b2: Byte, b3: Byte): Word {
     return intFromBytes(b0, b1, b2, b3)
 }
 
 typealias MessageGroup = ByteArray // 每次迭代压缩的消息分组固定为16字，合64字节，计512比特。
-fun WordArray.fill(messageGroup: MessageGroup) {
+internal fun WordArray.fill(messageGroup: MessageGroup) {
     // 字节数组长度必须为4的倍，由于仅在SM3内部使用，这里不做长度校验。
     for (i in 0 until 16) {
         this[i] = wordFromBytes(
@@ -80,10 +80,15 @@ fun WordArray.fill(messageGroup: MessageGroup) {
     }
 }
 
-fun Long.toWord(): Word {
+internal fun Long.toWord(): Word {
     return this.toInt()
 }
 
+/**
+ * SM3 核心算法
+ *
+ * @author Wang Xuanmin <shiningwang@vshining.com>
+ */
 class SM3 {
     /**-
      *  3. 符号
@@ -423,7 +428,7 @@ class SM3 {
         }
 
         // for debug
-        val wordHexStyle = WordHexStyle()
+        private val wordHexStyle = WordHexStyle()
     }
 
     /**
@@ -470,7 +475,7 @@ class SM3 {
         }
     }
 
-    class WordHexStyle : HexStringStyle {
+    internal class WordHexStyle : HexStringStyle {
         private var bc = 0 // byte counter
         private var wc = 0 // word counter
         override fun appendTo(builder: StringBuilder, byteHexString: String, byteIndex: Int) {

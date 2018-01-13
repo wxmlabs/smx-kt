@@ -5,6 +5,17 @@ import java.security.PrivilegedAction
 import java.security.Provider
 import java.security.Security
 
+/**
+ * 代码中动态注册
+ * <pre>
+ * import java.security.Security;
+ * import wxmlabs.security.smx.SMxProvider;
+ *
+ * Security.addProvider(new SMxProvider());
+ * // or
+ * // SMxProvider.register();
+ * </pre>
+ */
 class SMxProvider : Provider(NAME, version, info) {
     init {
         registerSM3MessageDigest()
@@ -38,9 +49,15 @@ class SMxProvider : Provider(NAME, version, info) {
         private val version = 0.1
         private val info = "SMx Provider, the cryptography smx for business of China (implements SM3, SM4, SM2)."
 
+        /**
+         * SMxProvider实例
+         */
         @JvmField
         val INSTANCE = SMxProvider()
 
+        /**
+         * 注册SMX
+         */
         @JvmStatic
         fun register() {
             if (Security.getProvider(NAME) == null) {
@@ -48,6 +65,9 @@ class SMxProvider : Provider(NAME, version, info) {
             }
         }
 
+        /**
+         * 注销SMX
+         */
         @JvmStatic
         fun unregister() {
             if (Security.getProvider(NAME) != null) {
