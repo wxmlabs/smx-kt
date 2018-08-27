@@ -1,16 +1,3 @@
 group 'com.wxmlabs'
 version '1.0-SNAPSHOT'
 
-allprojects {
-    buildscript {
-        repositories {
-            maven { url centralMirror }
-            maven { url jcenterMirror }
-        }
-    }
-    repositories {
-        maven { url centralMirror }
-        maven { url jcenterMirror }
-    }
-}
-
